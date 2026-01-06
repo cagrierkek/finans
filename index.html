@@ -1,31 +1,53 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <title>Finans Takibi</title>
+  <style>
+    body { font-family: Arial; background:#f5f5f5; padding:30px; }
+    input { margin:5px; padding:5px; }
+    .box { background:white; padding:20px; border-radius:8px; max-width:400px; }
+  </style>
+</head>
+<body>
+
+<div class="box">
+  <h2>Güncel Kurlar</h2>
+  <div id="rates">Yükleniyor...</div>
+
+  <h3>Varlıklar</h3>
+  TL: <input id="tl" type="number" value="0"><br>
+  USD: <input id="usd" type="number" value="0"><br>
+  Gram Altın: <input id="gold" type="number" value="0"><br>
+
+  <button onclick="calculate()">Hesapla</button>
+
+  <h3 id="total"></h3>
+</div>
+
 <script>
-let rates = { usd:0, eur:0, gold:0 };
+let rates = { usd: 0, gold: 0 };
 
 async function loadRates() {
-  const res = await fetch("https://api.allorigins.win/raw?url=https://www.tcmb.gov.tr/kurlar/today.xml");
-  const text = await res.text();
+  try {
+    const res = await fetch("https://api.allorigins.win/raw?url=https://finans.truncgil.com/today.json");
+    const data = await res.json();
 
-  const parser = new DOMParser();
-  const xml = parser.parseFromString(text, "text/xml");
+    rates.usd = Number(data["USD"]["Satış"].replace(",", "."));
+    rates.gold = Number(data["gram-altin"]["Satış"].replace(",", "."));
 
-  rates.usd = Number(xml.querySelector("Currency[CurrencyCode='USD'] ForexSelling").textContent.replace(",", "."));
-  rates.eur = Number(xml.querySelector("Currency[CurrencyCode='EUR'] ForexSelling").textContent.replace(",", "."));
-
-  const goldRes = await fetch("https://api.allorigins.win/raw?url=https://finans.truncgil.com/today.json");
-  const goldData = await goldRes.json();
-  rates.gold = Number(goldData["gram-altin"]["Alış"].replace(",", "."));
-
-  document.getElementById("rates").innerText =
-    `USD: ${rates.usd.toFixed(2)} | EUR: ${rates.eur.toFixed(2)} | Gram Altın: ${rates.gold.toFixed(2)} TL`;
+    document.getElementById("rates").innerText =
+      `USD: ${rates.usd} TL | Gram Altın: ${rates.gold} TL`;
+  } catch (e) {
+    document.getElementById("rates").innerText = "Kurlar alınamadı ❌";
+  }
 }
 
 function calculate() {
   const total =
     Number(tl.value) +
     Number(usd.value) * rates.usd +
-    Number(eur.value) * rates.eur +
-    Number(gold.value) * rates.gold +
-    Number(stockQty.value) * Number(stockPrice.value);
+    Number(gold.value) * rates.gold;
 
   document.getElementById("total").innerText =
     "Toplam Varlık (TL): " + total.toFixed(2);
@@ -33,3 +55,6 @@ function calculate() {
 
 loadRates();
 </script>
+
+</body>
+</html>
