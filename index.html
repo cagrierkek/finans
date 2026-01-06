@@ -1,57 +1,19 @@
-<!DOCTYPE html>
-<html lang="tr">
-<head>
-<meta charset="UTF-8">
-<title>Finans Panelim</title>
-<style>
-body { font-family: Arial; background:#f4f6f8; padding:20px }
-.section { background:#fff; padding:15px; margin-bottom:15px; border-radius:8px }
-h1 { margin-bottom:5px }
-input, button { width:100%; padding:8px; margin:6px 0 }
-.total { font-size:22px; font-weight:bold }
-.small { font-size:13px; color:#666 }
-</style>
-</head>
-<body>
-
-<h1>Kişisel Finans Paneli</h1>
-<div class="small">Tüm değerler otomatik TL</div>
-
-<div class="section">
-<h3>Nakit</h3>
-<input id="tl" type="number" placeholder="TL">
-<input id="usd" type="number" placeholder="USD">
-<input id="eur" type="number" placeholder="EUR">
-</div>
-
-<div class="section">
-<h3>Altın</h3>
-<input id="gold" type="number" placeholder="Gram Altın">
-</div>
-
-<div class="section">
-<h3>Hisse / Diğer</h3>
-<input id="stockQty" type="number" placeholder="Adet">
-<input id="stockPrice" type="number" placeholder="Birim Fiyat (TL)">
-</div>
-
-<button onclick="calculate()">Hesapla</button>
-
-<div class="section total" id="total">Toplam: -</div>
-<div class="section small" id="rates">Kurlar yükleniyor…</div>
-
 <script>
 let rates = { usd:0, eur:0, gold:0 };
 
 async function loadRates() {
-  const res = await fetch("https://api.exchangerate.host/latest?base=USD&symbols=TRY,EUR,XAU");
-  const d = await res.json();
+  const res = await fetch("https://api.allorigins.win/raw?url=https://www.tcmb.gov.tr/kurlar/today.xml");
+  const text = await res.text();
 
-  rates.usd = d.rates.TRY;
-  rates.eur = d.rates.TRY / d.rates.EUR;
+  const parser = new DOMParser();
+  const xml = parser.parseFromString(text, "text/xml");
 
-  const onsTL = d.rates.TRY / d.rates.XAU;
-  rates.gold = onsTL / 31.1035;
+  rates.usd = Number(xml.querySelector("Currency[CurrencyCode='USD'] ForexSelling").textContent.replace(",", "."));
+  rates.eur = Number(xml.querySelector("Currency[CurrencyCode='EUR'] ForexSelling").textContent.replace(",", "."));
+
+  const goldRes = await fetch("https://api.allorigins.win/raw?url=https://finans.truncgil.com/today.json");
+  const goldData = await goldRes.json();
+  rates.gold = Number(goldData["gram-altin"]["Alış"].replace(",", "."));
 
   document.getElementById("rates").innerText =
     `USD: ${rates.usd.toFixed(2)} | EUR: ${rates.eur.toFixed(2)} | Gram Altın: ${rates.gold.toFixed(2)} TL`;
@@ -71,6 +33,3 @@ function calculate() {
 
 loadRates();
 </script>
-
-</body>
-</html>
