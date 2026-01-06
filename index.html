@@ -30,16 +30,20 @@ let rates = { usd: 0, gold: 0 };
 
 async function loadRates() {
   try {
-    const res = await fetch("https://api.allorigins.win/raw?url=https://finans.truncgil.com/today.json");
+    const res = await fetch(
+      "https://api.codetabs.com/v1/proxy?quest=https://finans.truncgil.com/today.json"
+    );
     const data = await res.json();
 
     rates.usd = Number(data["USD"]["Satış"].replace(",", "."));
     rates.gold = Number(data["gram-altin"]["Satış"].replace(",", "."));
 
     document.getElementById("rates").innerText =
-      `USD: ${rates.usd} TL | Gram Altın: ${rates.gold} TL`;
+      `USD: ${rates.usd.toFixed(2)} TL | Gram Altın: ${rates.gold.toFixed(2)} TL`;
   } catch (e) {
-    document.getElementById("rates").innerText = "Kurlar alınamadı ❌";
+    document.getElementById("rates").innerText =
+      "Kurlar alınamadı ❌";
+    console.error(e);
   }
 }
 
@@ -55,6 +59,7 @@ function calculate() {
 
 loadRates();
 </script>
+
 
 </body>
 </html>
